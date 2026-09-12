@@ -1,0 +1,94 @@
+name: Build Windows executable
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "monitor.py"
+      - "requirements.txt"
+      - "config.example.json"
+      - "README.md"
+      - ".github/workflows/build-windows.yml"
+  pull_request:
+    paths:
+      - "monitor.py"
+      - "requirements.txt"
+      - "config.example.json"
+      - ".github/workflows/build-windows.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install "pyinstaller==6.22.2"
+
+      - name: Run tests
+        run: python -m unittest discover -s tests -v
+
+      - name: Build executable
+        shell: pwsh
+        run: |
+          python -m PyInstaller `
+            --noconfirm `
+            --clean `
+            --onefile `
+            --console `
+            --name CocofaMonitor `
+            monitor.py
+
+      - name: Smoke-test executable
+        shell: pwsh
+        run: |
+          $help = & dist/CocofaMonitor.exe --help 2>&1
+          $helpText = $help -join "`n"
+          if ($LASTEXITCODE -ne 0 -or $helpText -notmatch "once" -or $helpText -notmatch "watch") {
+            throw "Built executable did not start correctly"
+          }
+
+      - name: Assemble distribution
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path package | Out-Null
+          Copy-Item dist/CocofaMonitor.exe package/CocofaMonitor.exe
+          Copy-Item config.example.json package/config.json
+          @'
+          Cocofa 账号后台只读监控（Windows）
+
+          1. 用文本编辑器打开 config.json，填写真实的 target_url。
+          2. 双击 CocofaMonitor.exe，或在终端运行 CocofaMonitor.exe watch。
+          3. 如只需检查一次，请运行 CocofaMonitor.exe once。
+          4. data 和 logs 文件夹会在 config.json 旁自动创建。
+
+          用户名、密码、验证码和登录 Cookie 不会写入磁盘。
+          '@ | Set-Content -Path package/使用说明.txt -Encoding UTF8
+          (Get-FileHash package/CocofaMonitor.exe -Algorithm SHA256).Hash.ToLower() + "  CocofaMonitor.exe" |
+            Set-Content -Path package/SHA256SUMS.txt -Encoding ascii
+
+      - name: Upload Windows package
+        uses: actions/upload-artifact@v4
+        with:
+          name: CocofaMonitor-Windows-x64
+          path: package/
+          if-no-files-found: error
+          retention-days: 30

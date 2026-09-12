@@ -21,6 +21,17 @@ python monitor.py watch
 
 ## Windows 安装与启动
 
+### 下载已经打包好的 EXE（推荐）
+
+1. 打开本仓库的 **Actions** 页面，选择最近一次成功的 **Build Windows executable**。
+2. 在页面底部的 **Artifacts** 下载 `CocofaMonitor-Windows-x64`，解压到一个可写文件夹。
+3. 用文本编辑器打开同目录的 `config.json`，至少把 `target_url` 改成真实平台地址。
+4. 双击 `CocofaMonitor.exe`。不带参数启动时默认持续监控；登录成功后请保留命令窗口，按 `Ctrl+C` 停止。
+
+下载包内包括 `CocofaMonitor.exe`、可编辑的 `config.json`、简要使用说明和 EXE 的 SHA-256 校验值。程序运行后会在 `config.json` 旁创建 `data` 和 `logs` 文件夹。GitHub Actions 构建产物默认保留 30 天，需要登录 GitHub 才能下载。
+
+### 使用 Python 启动
+
 建议使用从 python.org 安装的 Python 3.9 或更高版本，并在安装时勾选 Tk/Tcl（标准安装默认包含）：
 
 ```bat
@@ -31,6 +42,22 @@ python monitor.py watch
 ```
 
 登录窗口关闭后，命令窗口可以最小化，不需要保持任何网页或浏览器窗口。关闭命令窗口或按 `Ctrl+C` 会结束监控和仅存于内存的登录 Cookie。
+
+### 在 Windows 本地构建 EXE
+
+只能在 Windows 上构建真正的 Windows EXE。打开 PowerShell，在项目目录执行：
+
+```powershell
+py -3.11 -m venv .venv
+.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+python -m pip install "pyinstaller==6.22.2"
+python -m unittest discover -s tests -v
+python -m PyInstaller --noconfirm --clean --onefile --console --name CocofaMonitor monitor.py
+```
+
+生成文件位于 `dist\CocofaMonitor.exe`。将 `config.example.json` 复制为 `dist\config.json`，修改其中的 `target_url` 后即可运行。PyInstaller 不支持从 macOS 交叉生成 Windows EXE，因此仓库工作流固定使用 GitHub 的 Windows runner 构建。
 
 ## 启动后台监控
 

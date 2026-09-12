@@ -686,8 +686,15 @@ def run_watch(config_path: Path, config: MutableMapping[str, Any]) -> int:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Cocofa 账号管理后台只读监控")
-    parser.add_argument("command", choices=("once", "watch"), help="登录后检查一次，或持续后台监控")
-    parser.add_argument("--config", default="config.json", help="配置文件路径（默认 config.json）")
+    parser.add_argument(
+        "command",
+        nargs="?",
+        default="watch",
+        choices=("once", "watch"),
+        help="登录后检查一次，或持续后台监控（默认 watch）",
+    )
+    default_config = Path(sys.executable).resolve().parent / "config.json" if getattr(sys, "frozen", False) else Path("config.json")
+    parser.add_argument("--config", default=str(default_config), help="配置文件路径（默认使用程序旁的 config.json）")
     return parser
 
 
