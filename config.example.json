@@ -1,0 +1,10 @@
+{
+  "target_url": "http://your-cocofa-host:15000/",
+  "captcha_endpoint": "/api/auth/captcha",
+  "login_endpoint": "/api/auth/login",
+  "accounts_endpoint": "/api/auth/accounts",
+  "poll_interval_seconds": 5,
+  "request_timeout_seconds": 15,
+  "snapshot_file": "data/last_snapshot.json",
+  "change_log_file": "logs/changes.jsonl"
+}
