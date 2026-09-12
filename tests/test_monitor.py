@@ -13,6 +13,7 @@ from monitor import (
     diff_snapshots,
     load_config,
     make_accounts,
+    make_console_unicode_safe,
     captcha_to_png,
 )
 
@@ -131,6 +132,10 @@ class MonitorTests(unittest.TestCase):
         image = Image.open(io.BytesIO(png))
         self.assertEqual(image.format, "PNG")
         self.assertEqual(image.size, (240, 80))
+
+    def test_console_encoding_setup_accepts_test_streams(self):
+        # unittest's captured streams do not always expose reconfigure().
+        make_console_unicode_safe()
 
 
 if __name__ == "__main__":

@@ -698,7 +698,17 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def make_console_unicode_safe() -> None:
+    """Do not crash when Windows uses a legacy non-Chinese console code page."""
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(errors="replace")
+        except (AttributeError, OSError):
+            pass
+
+
 def main(argv: Optional[Sequence[str]] = None) -> int:
+    make_console_unicode_safe()
     args = build_parser().parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     config_path = Path(args.config).resolve()
